@@ -16,6 +16,7 @@ DEFAULT_CONFIG_PATH = Path("configs") / "default.toml"
 @dataclass(frozen=True)
 class Config:
     node_id: int = 0
+    store_root: str = "../skips_chores"
     tmux_session: str = "chore-dispatcher"
     signal_dir: str = "/tmp/kiro_signals"
 

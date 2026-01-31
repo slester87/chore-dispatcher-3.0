@@ -1,5 +1,6 @@
 # Core configuration defaults
 node_id = 0
+store_root = "../skips_chores"
 
 tmux_session = "chore-dispatcher"
 signal_dir = "/tmp/kiro_signals"
