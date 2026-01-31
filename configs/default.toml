@@ -1,0 +1,16 @@
+# Core configuration defaults
+node_id = 0
+
+tmux_session = "chore-dispatcher"
+signal_dir = "/tmp/kiro_signals"
+
+auto_advance_plan_seconds = 5
+auto_advance_work_seconds = 10
+auto_advance_plan_review_seconds = 3
+auto_advance_work_review_seconds = 5
+
+default_log_level = "INFO"
+
+# Paths
+active_store_path = "data/active_chores.jsonl"
+archive_store_path = "data/archive_chores.jsonl"
