@@ -3,7 +3,9 @@ from __future__ import annotations
 import re
 
 from chore_dispatcher.models.status import ChoreStatus
-from chore_dispatcher.tmux.session import run_tmux, window_exists
+import subprocess
+
+from chore_dispatcher.tmux.session import ensure_session, run_tmux, window_exists
 
 
 _SLUG_RE = re.compile(r"[^a-z0-9-]+")
@@ -27,7 +29,11 @@ def create_window(session_name: str, chore_id: int, role: str, command: str | No
     args: list[str] = ["new-window", "-t", session_name, "-n", name]
     if command:
         args.append(command)
-    run_tmux(args)
+    try:
+        run_tmux(args)
+    except subprocess.CalledProcessError:
+        ensure_session(session_name)
+        run_tmux(args)
 
 
 def create_named_window(session_name: str, name: str, command: str | None = None) -> None:
@@ -36,7 +42,11 @@ def create_named_window(session_name: str, name: str, command: str | None = None
     args: list[str] = ["new-window", "-t", session_name, "-n", name]
     if command:
         args.append(command)
-    run_tmux(args)
+    try:
+        run_tmux(args)
+    except subprocess.CalledProcessError:
+        ensure_session(session_name)
+        run_tmux(args)
 
 
 def split_review_panes(session_name: str, window: str, right_cmd: str) -> None:
