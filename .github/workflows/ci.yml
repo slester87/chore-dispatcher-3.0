@@ -13,10 +13,28 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+      - uses: actions/setup-java@v4
+        with:
+          distribution: "temurin"
+          java-version: "11"
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           python -m pip install ruff
+      - name: Install TLC
+        run: |
+          mkdir -p tools
+          curl -L -o tools/tla2tools.jar https://github.com/tlaplus/tlaplus/releases/latest/download/tla2tools.jar
+          python - <<'PY'
+          from pathlib import Path
+          Path("tools/tlc").write_text(
+              "#!/usr/bin/env bash\n"
+              "set -euo pipefail\n"
+              "exec java -jar \"$(dirname \"$0\")/tla2tools.jar\" \"$@\"\n"
+          )
+          PY
+          chmod +x tools/tlc
+          echo "$PWD/tools" >> "$GITHUB_PATH"
       - name: CI
         run: |
           make ci
