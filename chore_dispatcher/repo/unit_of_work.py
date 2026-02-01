@@ -1,12 +1,15 @@
 from __future__ import annotations
 
 import copy
-from pathlib import Path
 from typing import Callable
 
 from chore_dispatcher.config import Config
 from chore_dispatcher.models.chore import Chore
-from chore_dispatcher.repo.persistence import load_active_and_archive, resolve_store_paths, save_chores_atomic
+from chore_dispatcher.repo.persistence import (
+    load_active_and_archive,
+    resolve_store_paths,
+    save_active_and_archive_atomic,
+)
 from chore_dispatcher.repo.repository import ChoreRepository
 
 
@@ -64,8 +67,12 @@ class FileUnitOfWork:
     def commit(self) -> None:
         if self._active is None or self._archive is None:
             raise RuntimeError("UnitOfWork has not been started")
-        save_chores_atomic(self._active_path, self._active.values())
-        save_chores_atomic(self._archive_path, self._archive.values())
+        save_active_and_archive_atomic(
+            self._active_path,
+            self._archive_path,
+            self._active.values(),
+            self._archive.values(),
+        )
         self._active = None
         self._archive = None
 

@@ -2,8 +2,8 @@ from chore_dispatcher.repo.persistence import (
     load_active_and_archive,
     load_chores,
     resolve_store_paths,
+    save_active_and_archive_atomic,
     save_chores,
-    save_chores_atomic,
 )
 from chore_dispatcher.repo.repository import ChoreRepository
 from chore_dispatcher.repo.unit_of_work import FileUnitOfWork, InMemoryUnitOfWork
@@ -15,6 +15,6 @@ __all__ = [
     "load_active_and_archive",
     "load_chores",
     "resolve_store_paths",
+    "save_active_and_archive_atomic",
     "save_chores",
-    "save_chores_atomic",
 ]

@@ -3,7 +3,7 @@ import unittest
 from pathlib import Path
 
 from chore_dispatcher.config import Config
-from chore_dispatcher.repo.persistence import load_active_and_archive
+from chore_dispatcher.repo.persistence import load_active_and_archive, save_active_and_archive_atomic
 from chore_dispatcher.repo.unit_of_work import FileUnitOfWork
 
 
@@ -47,6 +47,16 @@ class TestFileUnitOfWork(unittest.TestCase):
             active, archive = load_active_and_archive(active_path, archive_path)
             self.assertEqual(active, {})
             self.assertEqual(archive, {})
+
+    def test_manifest_switch(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            active_path = Path(tmpdir) / "active.jsonl"
+            archive_path = Path(tmpdir) / "archive.jsonl"
+            save_active_and_archive_atomic(active_path, archive_path, [ ], [ ])
+            save_active_and_archive_atomic(active_path, archive_path, [ ], [ ])
+            loaded_active, loaded_archive = load_active_and_archive(active_path, archive_path)
+            self.assertEqual(loaded_active, {})
+            self.assertEqual(loaded_archive, {})
 
 
 if __name__ == "__main__":

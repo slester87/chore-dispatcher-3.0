@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import json
+import os
+import time
 from pathlib import Path
 from typing import Iterable
 
@@ -9,12 +11,18 @@ from chore_dispatcher.models.chore import Chore
 from chore_dispatcher.models.status import ChoreStatus
 from chore_dispatcher.repo.integrity import dedupe_chore_payloads, enforce_archive_exclusivity
 
+MANIFEST_NAME = "store_manifest.json"
+
 
 def resolve_store_paths(config: Config) -> tuple[Path, Path]:
     root = Path(config.store_root)
     active = root / config.active_store_path
     archive = root / config.archive_store_path
     return active, archive
+
+
+def _manifest_path(root: Path) -> Path:
+    return root / MANIFEST_NAME
 
 
 def serialize_chore(chore: Chore) -> dict:
@@ -80,11 +88,40 @@ def load_chores(path: Path) -> dict[int, Chore]:
     return chores
 
 
+def _read_manifest(root: Path) -> dict | None:
+    path = _manifest_path(root)
+    if not path.exists():
+        return None
+    with path.open("r", encoding="utf-8") as fh:
+        return json.load(fh)
+
+
+def _resolve_manifest_paths(root: Path, manifest: dict) -> tuple[Path, Path]:
+    active_rel = manifest.get("active")
+    archive_rel = manifest.get("archive")
+    if not active_rel or not archive_rel:
+        raise ValueError("Manifest missing active/archive paths")
+    return root / active_rel, root / archive_rel
+
+
 def load_active_and_archive(active_path: Path, archive_path: Path) -> tuple[dict[int, Chore], dict[int, Chore]]:
+    root = active_path.parent
+    manifest = _read_manifest(root)
+    if manifest is not None:
+        try:
+            active_path, archive_path = _resolve_manifest_paths(root, manifest)
+        except ValueError:
+            pass
+
     active = load_chores(active_path)
     archive = load_chores(archive_path)
     enforce_archive_exclusivity(active, archive)
     return active, archive
+
+
+def _fsync_file(handle) -> None:
+    handle.flush()
+    os.fsync(handle.fileno())
 
 
 def _write_jsonl(path: Path, chores: Iterable[Chore]) -> None:
@@ -92,14 +129,46 @@ def _write_jsonl(path: Path, chores: Iterable[Chore]) -> None:
     with path.open("w", encoding="utf-8") as fh:
         for chore in chores:
             fh.write(json.dumps(serialize_chore(chore)) + "\n")
+        _fsync_file(fh)
 
 
 def save_chores(path: Path, chores: Iterable[Chore]) -> None:
     _write_jsonl(path, chores)
 
 
-def save_chores_atomic(path: Path, chores: Iterable[Chore]) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    temp_path = path.with_suffix(path.suffix + ".tmp")
-    _write_jsonl(temp_path, chores)
-    temp_path.replace(path)
+def _next_version(manifest: dict | None) -> int:
+    if manifest and isinstance(manifest.get("version"), int):
+        return manifest["version"] + 1
+    return int(time.time() * 1000)
+
+
+def save_active_and_archive_atomic(active_path: Path, archive_path: Path, active: Iterable[Chore], archive: Iterable[Chore]) -> None:
+    root = active_path.parent
+    manifest = _read_manifest(root)
+    version = _next_version(manifest)
+
+    active_version = active_path.with_name(f"{active_path.stem}.v{version}{active_path.suffix}")
+    archive_version = archive_path.with_name(f"{archive_path.stem}.v{version}{archive_path.suffix}")
+
+    active_tmp = active_version.with_suffix(active_version.suffix + ".tmp")
+    archive_tmp = archive_version.with_suffix(archive_version.suffix + ".tmp")
+
+    _write_jsonl(active_tmp, active)
+    _write_jsonl(archive_tmp, archive)
+
+    active_tmp.replace(active_version)
+    archive_tmp.replace(archive_version)
+
+    manifest_payload = {
+        "version": version,
+        "active": str(active_version.relative_to(root)),
+        "archive": str(archive_version.relative_to(root)),
+    }
+
+    manifest_path = _manifest_path(root)
+    manifest_tmp = manifest_path.with_suffix(manifest_path.suffix + ".tmp")
+    manifest_path.parent.mkdir(parents=True, exist_ok=True)
+    with manifest_tmp.open("w", encoding="utf-8") as fh:
+        json.dump(manifest_payload, fh)
+        _fsync_file(fh)
+    manifest_tmp.replace(manifest_path)

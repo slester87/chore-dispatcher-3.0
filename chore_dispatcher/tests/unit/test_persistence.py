@@ -9,6 +9,7 @@ from chore_dispatcher.repo.persistence import (
     load_active_and_archive,
     load_chores,
     resolve_store_paths,
+    save_active_and_archive_atomic,
     save_chores,
 )
 
@@ -50,8 +51,7 @@ class TestPersistence(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmpdir:
             active_path = Path(tmpdir) / "active.jsonl"
             archive_path = Path(tmpdir) / "archive.jsonl"
-            save_chores(active_path, [active])
-            save_chores(archive_path, [archive])
+            save_active_and_archive_atomic(active_path, archive_path, [active], [archive])
 
             loaded_active, loaded_archive = load_active_and_archive(active_path, archive_path)
             self.assertNotIn(1, loaded_active)
