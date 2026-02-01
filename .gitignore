@@ -1,3 +1,5 @@
 .DS_Store
 *.egg-info/
 __pycache__/
+tools/tla2tools.jar
+tools/tlc
