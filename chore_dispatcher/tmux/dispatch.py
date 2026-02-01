@@ -1,12 +1,23 @@
 from __future__ import annotations
 
 from chore_dispatcher.models.chore import Chore
+import shlex
+
+from chore_dispatcher.prompts import build_role_prompt
 from chore_dispatcher.tmux.session import ensure_session, ensure_tmux_available, run_tmux
 from chore_dispatcher.tmux.windows import create_window, role_label, split_review_panes, window_name
 
 
 def _command_for_role(role: str, chore: Chore, kiro_command: str) -> str:
-    return f"{kiro_command}"
+    prompt = build_role_prompt(chore)
+    env_parts = [
+        f\"CHORE_ID={shlex.quote(str(chore.id))}\",
+        f\"CHORE_NAME={shlex.quote(chore.name)}\",
+        f\"CHORE_DESCRIPTION={shlex.quote(chore.description)}\",
+        f\"CHORE_STATUS={shlex.quote(chore.status.value)}\",
+        f\"CHORE_ROLE={shlex.quote(role.upper())}\",
+    ]
+    return f\"{' '.join(env_parts)} {kiro_command} {shlex.quote(prompt)}\"
 
 
 def dispatch_chore_window(session_name: str, chore: Chore, kiro_command: str) -> None:

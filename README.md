@@ -25,6 +25,7 @@ python -m chore_dispatcher.mcp.http_server
 ```
 
 The Kiro command used for tmux windows is configured via `kiro_command` in `configs/default.toml`.
+Prompts are injected with chore context, including `progress_info` and `review_info`.
 
 To override config:
 
@@ -291,6 +292,7 @@ chore{chore_id}_{Planner|Worker}
 - **Role Types**: planner, plan_reviewer, worker, work_reviewer
 - **Trusted Tools**: "@chore-dispatcher,read,write,web_fetch,web_search,grep,glob,shell,code"
 - **Context Injection**: Role-specific prompts with chore context
+- **Chore Metadata**: Prompt injection should include `progress_info` and `review_info` when present
 
 #### Environment Variables
 
