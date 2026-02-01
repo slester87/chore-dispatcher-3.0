@@ -9,6 +9,11 @@ description = "Chore Dispatcher 3.0 greenfield implementation"
 readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "Proprietary" }
+dependencies = [
+    "fastapi",
+    "mcp",
+    "uvicorn",
+]
 
 [project.scripts]
 chore-dispatcher = "chore_dispatcher.cli:main"

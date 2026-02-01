@@ -20,6 +20,9 @@ class Config:
     tmux_session: str = "chore-dispatcher"
     tmux_enabled: bool = True
     signal_dir: str = "/tmp/kiro_signals"
+    http_host: str = "127.0.0.1"
+    http_port: int = 8080
+    mcp_path: str = "/mcp"
 
     auto_advance_plan_seconds: int = 5
     auto_advance_work_seconds: int = 10

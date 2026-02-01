@@ -6,6 +6,10 @@ tmux_session = "chore-dispatcher"
 tmux_enabled = true
 signal_dir = "/tmp/kiro_signals"
 
+http_host = "127.0.0.1"
+http_port = 8080
+mcp_path = "/mcp"
+
 auto_advance_plan_seconds = 5
 auto_advance_work_seconds = 10
 auto_advance_plan_review_seconds = 3

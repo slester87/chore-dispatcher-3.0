@@ -16,6 +16,21 @@ Greenfield implementation of the Chore Dispatcher system per the 3.0 technical s
 - WORK_REVIEW: add a review pane to `chore<id>_Worker`.
 - WORK_DONE: tear down `chore<id>_Worker`.
 
+## Running the HTTP MCP server
+
+By default it binds to `127.0.0.1:8080` and mounts MCP at `/mcp` (configurable in `configs/default.toml`).
+
+```
+python -m chore_dispatcher.mcp.http_server
+```
+
+To override config:
+
+```
+export CHORE_DISPATCHER_CONFIG=/path/to/config.toml
+python -m chore_dispatcher.mcp.http_server
+```
+
 ---
 
 ## Technical Specification
