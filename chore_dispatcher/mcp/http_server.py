@@ -125,7 +125,7 @@ def build_app(config_path: str | None = None) -> FastAPI:
         yield
 
     app = FastAPI(lifespan=lifespan)
-    app.mount(config.mcp_path, mcp.app)
+    app.mount(config.mcp_path, mcp.streamable_http_app())
 
     class ApiRequest(BaseModel):
         id: Any | None = None
