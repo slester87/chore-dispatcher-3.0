@@ -24,6 +24,17 @@ PLAN → PLAN_REVIEW → PLAN_READY → WORK → WORK_REVIEW → WORK_DONE
 5. **WORK_REVIEW** - Review of completed work
 6. **WORK_DONE** - Work complete and approved (terminal state)
 
+#### Roles
+
+The system uses exactly four roles:
+
+1. **PLANNER**
+2. **PLAN_REVIEWER**
+3. **WORKER**
+4. **WORK_REVIEWER**
+
+Design responsibilities are handled within the PLANNER phase; there is no separate design role or state.
+
 #### State Transition Rules
 
 - States advance linearly through the workflow
@@ -198,7 +209,7 @@ chore-{chore_id}-{name_slug}
 ```
 
 - **Wrapper Script**: Monitors exit signals and handles cleanup
-- **Role Types**: knuth, planner, worker, reviewer
+- **Role Types**: planner, plan_reviewer, worker, work_reviewer
 - **Trusted Tools**: "@chore-dispatcher,read,write,web_fetch,web_search,grep,glob,shell,code"
 - **Context Injection**: Role-specific prompts with chore context
 
@@ -221,7 +232,6 @@ class AutoAdvanceConfig:
     delays = { 
         ChoreStatus.PLAN: 5,      # seconds
         ChoreStatus.WORK: 10,
-        ChoreStatus.DESIGN_REVIEW: 3,
         ChoreStatus.PLAN_REVIEW: 3,
         ChoreStatus.WORK_REVIEW: 5,
     }
