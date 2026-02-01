@@ -14,9 +14,9 @@ class TestTmuxHelpers(unittest.TestCase):
 
     def test_role_label(self) -> None:
         self.assertEqual(role_label(ChoreStatus.PLAN), "Planner")
-        self.assertEqual(role_label(ChoreStatus.PLAN_REVIEW), "Planner")
+        self.assertEqual(role_label(ChoreStatus.PLAN_REVIEW), "PlanReviewer")
         self.assertEqual(role_label(ChoreStatus.WORK), "Worker")
-        self.assertEqual(role_label(ChoreStatus.WORK_REVIEW), "Worker")
+        self.assertEqual(role_label(ChoreStatus.WORK_REVIEW), "WorkReviewer")
 
 
 if __name__ == "__main__":

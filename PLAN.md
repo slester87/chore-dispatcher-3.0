@@ -215,7 +215,7 @@ This plan is a greenfield implementation based solely on the 3.0 technical spec.
 
 ## Step 12 — TMUX Integration Core
 **Scope**
-- Session management, window/pane layout, naming.
+- Session management, window layout, naming.
 
 **Files/Modules**
 - `chore_dispatcher/tmux/session.py`
@@ -225,7 +225,7 @@ This plan is a greenfield implementation based solely on the 3.0 technical spec.
 **Acceptance Criteria**
 - Session is created if missing.
 - Window names follow `chore-{id}-{slug}`.
-- Review states create split panes.
+- Review states create separate windows (no panes).
 
 ---
 

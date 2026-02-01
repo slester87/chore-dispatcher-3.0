@@ -14,11 +14,11 @@ Greenfield implementation of the Chore Dispatcher system per the 3.0 technical s
 ## TMUX behavior (default on)
 
 - PLAN: create `chore<id>_Planner`.
-- PLAN_REVIEW: add a review pane to `chore<id>_Planner`.
-- PLAN_READY: tear down `chore<id>_Planner`.
+- PLAN_REVIEW: create `chore<id>_PlanReviewer`.
+- PLAN_READY: tear down `chore<id>_Planner` and `chore<id>_PlanReviewer`.
 - WORK: create `chore<id>_Worker`.
-- WORK_REVIEW: add a review pane to `chore<id>_Worker`.
-- WORK_DONE: tear down `chore<id>_Worker`.
+- WORK_REVIEW: create `chore<id>_WorkReviewer`.
+- WORK_DONE: tear down `chore<id>_Worker` and `chore<id>_WorkReviewer`.
 
 ## Running the HTTP MCP server
 
@@ -83,11 +83,11 @@ PLAN → PLAN_REVIEW → PLAN_READY → WORK → WORK_REVIEW → WORK_DONE
  TMUX dispatch rules (implementation)
 
   - PLAN → create planner window
-  - PLAN_REVIEW → add review pane to plan window
-  - PLAN_READY → tear down plan window
+  - PLAN_REVIEW → create plan review window
+  - PLAN_READY → tear down plan window and plan review window
   - WORK → create worker window
-  - WORK_REVIEW → add review pane to work window
-  - WORK_DONE → tear down work window
+  - WORK_REVIEW → create work review window
+  - WORK_DONE → tear down worker window and work review window
 
 #### State Definitions
 
@@ -259,31 +259,34 @@ chore_a.set_next_chore(chore_b)  # Creates A → B chain
 - **Auto-Creation**: Creates session if not exists
 - **Calls KIRO with Role Prompt + Chore instructions**: The critical component delivering value in this project is building a string out of a role prompt and the instructions needed to complete the chore, and then giving that string to a new process of KIRO called in the correct working directory for that KIRO to make the required changes. When the KIRO completes work on chore, it should automatically advance chore to the next state and tear down.
 
-#### Dispatch Triggers (Window/Panes)
+#### Dispatch Triggers (Windows Only)
 
 - **PLAN**: Create a new window for the planner.
-- **PLAN_REVIEW**: Add a review pane to the existing plan window.
-- **PLAN_READY**: Tear down the plan window after approval.
+- **PLAN_REVIEW**: Create a new window for the plan reviewer.
+- **PLAN_READY**: Tear down the plan window and plan review window after approval.
 - **WORK**: Create a new window for the worker.
-- **WORK_REVIEW**: Add a review pane to the existing work window.
-- **WORK_DONE**: Tear down the work window after approval.
+- **WORK_REVIEW**: Create a new window for the work reviewer.
+- **WORK_DONE**: Tear down the worker window and work review window after approval.
 
 #### Window Naming Convention
 
 ```
-chore{chore_id}_{Planner|Worker}
+chore{chore_id}_{Planner|PlanReviewer|Worker|WorkReviewer}
 ```
 
-- **Planner Window**: Used for PLAN and PLAN_REVIEW states
-- **Worker Window**: Used for WORK and WORK_REVIEW states
+- **Planner Window**: Used for PLAN state
+- **Plan Reviewer Window**: Used for PLAN_REVIEW state
+- **Worker Window**: Used for WORK state
+- **Work Reviewer Window**: Used for WORK_REVIEW state
 - **Unique Identification**: Chore ID ensures uniqueness
 
 #### Window Types by Status
 
 
-1. **PLAN**: Single-pane planner window with Kiro CLI  
-2. **WORK**: Single-pane worker window with Kiro CLI
-3. **REVIEW States**: Split-pane with Planner + Reviewer and Worker + reviewer
+1. **PLAN**: Planner window with Kiro CLI
+2. **PLAN_REVIEW**: Plan reviewer window with Kiro CLI
+3. **WORK**: Worker window with Kiro CLI
+4. **WORK_REVIEW**: Work reviewer window with Kiro CLI
 
 #### Kiro CLI Integration
 
@@ -494,7 +497,7 @@ Errors return:
 
 - **Window Creation**: Automatic window creation on chore dispatch which invokes KIRO with a dynamically generated string corresponding to the chore body such that a new process of KIRO is spun up to work on the chore body in the correct role for the current phase of the chore (Planner/PlanReviewer/Worker/WorkReviewer)
 - **Prompt Updates**: Dynamic window title updates based on chore status
-- **Pane Management**: Split-pane creation for review phases
+- **Review Windows**: Review phases always use their own windows (no panes)
 - **Session Cleanup**: Automatic cleanup of completed chore windows
 
 ### 14. Testing Requirements
@@ -528,8 +531,8 @@ Errors return:
 #### Pre-Push Validation
 
 ```bash
-python3 chore_dispatcher/test_chore.py  # Core functionality
-python3 chore_dispatcher/tests/run_tests.py  # Full test suite
+python3 -m unittest chore_dispatcher.tests.unit.test_chore  # Core functionality
+python3 -m unittest discover -s chore_dispatcher/tests -p "test_*.py"  # Full test suite
 ```
 
 #### Continuous Validation

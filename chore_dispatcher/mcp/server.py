@@ -12,7 +12,12 @@ from chore_dispatcher.repo.integrity import enforce_archive_exclusivity, find_or
 from chore_dispatcher.repo.persistence import serialize_chore
 from chore_dispatcher.repo.unit_of_work import FileUnitOfWork
 from chore_dispatcher.signals.signals import SignalWatcher
-from chore_dispatcher.tmux.dispatch import add_review_pane, dispatch_bootstrap_planner, dispatch_chore_window, teardown_window
+from chore_dispatcher.tmux.dispatch import (
+    dispatch_bootstrap_planner,
+    dispatch_chore_window,
+    dispatch_review_window,
+    teardown_windows,
+)
 from chore_dispatcher.special import SPECIAL_CHORE_ID, special_chore
 from chore_dispatcher.workflow.chain import validate_chain_integrity
 from chore_dispatcher.workflow.errors import TransitionError, ValidationError
@@ -58,9 +63,11 @@ class MCPServer:
             if chore.status == ChoreStatus.PLAN or chore.status == ChoreStatus.WORK:
                 dispatch_chore_window(self._config.tmux_session, chore, self._config.kiro_command)
             elif chore.status in {ChoreStatus.PLAN_REVIEW, ChoreStatus.WORK_REVIEW}:
-                add_review_pane(self._config.tmux_session, chore, self._config.kiro_command)
-            elif chore.status in {ChoreStatus.PLAN_READY, ChoreStatus.WORK_DONE}:
-                teardown_window(self._config.tmux_session, chore)
+                dispatch_review_window(self._config.tmux_session, chore, self._config.kiro_command)
+            elif chore.status == ChoreStatus.PLAN_READY:
+                teardown_windows(self._config.tmux_session, chore, ["Planner", "PlanReviewer"])
+            elif chore.status == ChoreStatus.WORK_DONE:
+                teardown_windows(self._config.tmux_session, chore, ["Worker", "WorkReviewer"])
         except Exception:
             return
 

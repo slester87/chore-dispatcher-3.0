@@ -49,11 +49,15 @@ def create_named_window(session_name: str, name: str, command: str | None = None
         run_tmux(args)
 
 
-def split_review_panes(session_name: str, window: str, right_cmd: str) -> None:
-    run_tmux(["split-window", "-t", f"{session_name}:{window}", "-h", right_cmd])
-
-
 def role_label(status: ChoreStatus) -> str:
-    if status in {ChoreStatus.PLAN, ChoreStatus.PLAN_REVIEW, ChoreStatus.PLAN_READY}:
+    if status == ChoreStatus.PLAN:
+        return "Planner"
+    if status == ChoreStatus.PLAN_REVIEW:
+        return "PlanReviewer"
+    if status == ChoreStatus.WORK:
+        return "Worker"
+    if status == ChoreStatus.WORK_REVIEW:
+        return "WorkReviewer"
+    if status == ChoreStatus.PLAN_READY:
         return "Planner"
     return "Worker"
