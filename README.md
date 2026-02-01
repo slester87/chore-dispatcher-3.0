@@ -1,5 +1,7 @@
 # Chore Dispatcher 3.0
 
+![ci](https://github.com/slester87/chore-dispatcher-3.0/actions/workflows/ci.yml/badge.svg)
+
 Greenfield implementation of the Chore Dispatcher system per the 3.0 technical specification.
 
 - Spec source: `chore_dispatcher_3.0_technical_spec.md`
