@@ -239,6 +239,3 @@ If the plan NEEDS REVISION:
 4. Continue this cycle until the plan meets all quality criteria
 
 This iterative process ensures high-quality SUB-CHORE decomposition before execution begins."""
-
-prompts.py
-Displaying PLANNER_PROMPTS.md.

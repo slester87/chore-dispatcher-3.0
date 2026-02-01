@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import re
-from typing import Iterable
 
 from chore_dispatcher.models.status import ChoreStatus
 from chore_dispatcher.tmux.session import run_tmux
