@@ -22,7 +22,12 @@ class ChoreDispatcherClient:
     def _request(self, method: str, params: dict[str, Any] | None = None) -> Any:
         payload = {"method": method, "params": params or {}}
         response = self._client.post(f"{self._base_url}/api", json=payload)
-        response.raise_for_status()
+        if response.status_code >= 400:
+            try:
+                detail: Any = response.json()
+            except ValueError:
+                detail = response.text
+            raise RuntimeError(f"HTTP {response.status_code}: {detail}")
         data = response.json()
         if "error" in data:
             raise RuntimeError(data["error"].get("message", "Unknown error"))

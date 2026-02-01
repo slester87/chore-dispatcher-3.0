@@ -10,7 +10,8 @@ except ModuleNotFoundError:  # pragma: no cover - fallback for older runtimes
     import tomli as tomllib  # type: ignore
 
 
-DEFAULT_CONFIG_PATH = Path("configs") / "default.toml"
+_MODULE_ROOT = Path(__file__).resolve().parent.parent
+DEFAULT_CONFIG_PATH = _MODULE_ROOT / "configs" / "default.toml"
 
 
 @dataclass(frozen=True)
@@ -43,7 +44,12 @@ class Config:
 
 
 def load_config(path: str | Path | None = None) -> Config:
-    config_path = Path(path) if path is not None else DEFAULT_CONFIG_PATH
+    if path is not None:
+        config_path = Path(path)
+    else:
+        config_path = DEFAULT_CONFIG_PATH
+        if not config_path.exists():
+            config_path = Path("configs") / "default.toml"
     if not config_path.exists():
         raise FileNotFoundError(f"Config not found: {config_path}")
 

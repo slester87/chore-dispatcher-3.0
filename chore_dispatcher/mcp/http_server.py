@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 from contextlib import asynccontextmanager
 from typing import Any
 
@@ -13,6 +14,12 @@ from chore_dispatcher.config import load_config
 from chore_dispatcher.mcp.server import MCPServer
 
 
+class ApiRequest(BaseModel):
+    id: Any | None = None
+    method: str
+    params: dict[str, Any] | None = None
+
+
 def _make_server(config_path: str | None) -> MCPServer:
     return MCPServer(config_path)
 
@@ -23,6 +30,10 @@ def _tool_response(method: str, params: dict[str, Any], server: MCPServer) -> di
 
 def build_app(config_path: str | None = None) -> FastAPI:
     config = load_config(config_path)
+    if config.mcp_path in {"/api", "/", ""}:
+        raise ValueError(
+            f"mcp_path cannot be '{config.mcp_path}'; it conflicts with the HTTP RPC endpoint"
+        )
     server = _make_server(config_path)
     mcp = FastMCP("chore-dispatcher")
 
@@ -127,11 +138,6 @@ def build_app(config_path: str | None = None) -> FastAPI:
     app = FastAPI(lifespan=lifespan)
     app.mount(config.mcp_path, mcp.streamable_http_app())
 
-    class ApiRequest(BaseModel):
-        id: Any | None = None
-        method: str
-        params: dict[str, Any] | None = None
-
     @app.post("/api")
     def api_call(payload: ApiRequest) -> dict[str, Any]:
         return server.handle_request(
@@ -142,8 +148,9 @@ def build_app(config_path: str | None = None) -> FastAPI:
 
 
 def main() -> int:
-    config_path = None
+    config_path = os.environ.get("CHORE_DISPATCHER_CONFIG")
     config = load_config(config_path)
+    print(f"Loaded config: {config_path or 'default'} (mcp_path={config.mcp_path})")
     app = build_app(config_path)
     uvicorn.run(app, host=config.http_host, port=config.http_port)
     return 0
