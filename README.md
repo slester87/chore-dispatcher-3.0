@@ -41,6 +41,14 @@ with ChoreDispatcherClient("http://127.0.0.1:8080") as client:
     print(chore["id"])
 ```
 
+## HTTP CLI
+
+```
+chore-dispatcher-http --base-url http://127.0.0.1:8080 health
+chore-dispatcher-http create "Example chore"
+chore-dispatcher-http list-active
+```
+
 ---
 
 ## Technical Specification

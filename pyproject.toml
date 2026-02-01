@@ -19,6 +19,7 @@ dependencies = [
 
 [project.scripts]
 chore-dispatcher = "chore_dispatcher.cli:main"
+chore-dispatcher-http = "chore_dispatcher.http_cli:main"
 
 [tool.setuptools]
 packages = ["chore_dispatcher"]
