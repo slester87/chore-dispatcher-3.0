@@ -4,6 +4,8 @@ from pathlib import Path
 
 from chore_dispatcher.mcp.server import MCPServer
 from chore_dispatcher.models.status import ChoreStatus
+from chore_dispatcher.repo.persistence import save_active_and_archive_atomic
+from chore_dispatcher.models.chore import Chore
 
 
 def _write_config(tmpdir: str) -> str:
@@ -147,6 +149,17 @@ class TestMcpServer(unittest.TestCase):
             result = server.handle_request({"id": 4, "method": "repair_integrity"})
             self.assertEqual(result["result"]["errors"], [])
             self.assertEqual(len(result["result"]["orphans"]), 1)
+
+    def test_repair_integrity_exclusivity(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            server = MCPServer(_write_config(tmpdir))
+            chore = Chore(id=42, name="Conflict", status=ChoreStatus.WORK_DONE)
+            active_path = Path(tmpdir) / "active.jsonl"
+            archive_path = Path(tmpdir) / "archive.jsonl"
+            save_active_and_archive_atomic(active_path, archive_path, [chore], [chore])
+
+            repaired = server.handle_request({"id": 1, "method": "repair_integrity"})
+            self.assertIn(42, repaired["result"]["removed_from_active"])
 
 
 if __name__ == "__main__":

@@ -8,7 +8,7 @@ from typing import Any
 from chore_dispatcher.config import load_config
 from chore_dispatcher.id.snowflake import Snowflake
 from chore_dispatcher.models.status import ChoreStatus, next_status
-from chore_dispatcher.repo.integrity import find_orphan_subchores
+from chore_dispatcher.repo.integrity import enforce_archive_exclusivity, find_orphan_subchores
 from chore_dispatcher.repo.persistence import serialize_chore
 from chore_dispatcher.repo.unit_of_work import FileUnitOfWork
 from chore_dispatcher.signals.signals import SignalWatcher
@@ -162,12 +162,17 @@ class MCPServer:
                 chores = {chore.id: chore for chore in repo.list_all()}
                 errors = validate_chain_integrity(chores)
                 orphans = find_orphan_subchores(chores)
-                uow.rollback()
+                removed = enforce_archive_exclusivity(chores, uow.archive_store)
+                if removed:
+                    uow.commit()
+                else:
+                    uow.rollback()
                 return _response(
                     request_id,
                     {
                         "errors": errors,
                         "orphans": [serialize_chore(chore) for chore in orphans],
+                        "removed_from_active": removed,
                     },
                 )
             if method == "list_archive":
