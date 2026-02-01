@@ -143,7 +143,7 @@ def find_root_chores() -> List[Chore]  # Chores without parents
 - **Archive Format**: Separate JSONL file for completed chores
 - **Serialization**: Bidirectional chore ↔ dictionary conversion
 - **Relationship Linking**: Post-load linking of chore chains and parent-child relationships
-- **Atomic Operations**: File-based transactions for consistency, aligned with UoW commits (write-temp + rename)
+- **Atomic Operations**: Cross-file atomicity via a manifest pointer file. Writes must stage both active and archive JSONL files, then atomically swap a single manifest file that points to the new pair (write-temp + fsync + rename). This ensures active and archive are updated as one logical unit.
 - **Mutual Exclusivity Rule**: A chore must never exist in both the active JSONL store and the archive JSONL store at the same time. Archival is a move operation, not a copy.
 
 #### Data Integrity
