@@ -12,6 +12,7 @@ from chore_dispatcher.repo.integrity import enforce_archive_exclusivity, find_or
 from chore_dispatcher.repo.persistence import serialize_chore
 from chore_dispatcher.repo.unit_of_work import FileUnitOfWork
 from chore_dispatcher.signals.signals import SignalWatcher
+from chore_dispatcher.tmux.dispatch import dispatch_chore_window
 from chore_dispatcher.workflow.chain import validate_chain_integrity
 from chore_dispatcher.workflow.errors import TransitionError, ValidationError
 from chore_dispatcher.workflow.transitions import StateTransitionEngine
@@ -30,6 +31,7 @@ class MCPServer:
         self._config = config
         self._transitions = StateTransitionEngine()
         self._signals = SignalWatcher(config.signal_dir, poll_interval=1.0)
+        self._tmux_enabled = bool(config.tmux_enabled)
 
     def list_active(self) -> list[dict[str, Any]]:
         uow = FileUnitOfWork(self._config, self._snowflake.next_id)
@@ -47,6 +49,14 @@ class MCPServer:
         archive = [serialize_chore(chore) for chore in uow.archive_store.values()]
         uow.rollback()
         return active + archive
+
+    def _maybe_dispatch_tmux(self, chore: Any) -> None:
+        if not self._tmux_enabled:
+            return
+        try:
+            dispatch_chore_window(self._config.tmux_session, chore)
+        except Exception:
+            return
 
     def _collect_sub_chores(self, chore: Any, recursive: bool) -> list[Any]:
         collected = []
@@ -79,6 +89,7 @@ class MCPServer:
             if method == "create":
                 chore = repo.create(params["name"], params.get("description", ""))
                 uow.commit()
+                self._maybe_dispatch_tmux(chore)
                 return _response(request_id, serialize_chore(chore))
             if method == "read":
                 chore = repo.read(params["id"])
@@ -142,6 +153,7 @@ class MCPServer:
                 to_status = ChoreStatus(params["to_status"])
                 self._transitions.execute_transition(chore, to_status)
                 uow.commit()
+                self._maybe_dispatch_tmux(chore)
                 return _response(request_id, serialize_chore(chore))
             if method == "advance_to_next":
                 chore = repo.read(params["id"])
@@ -153,6 +165,7 @@ class MCPServer:
                     raise TransitionError("No further status available")
                 self._transitions.execute_transition(chore, expected)
                 uow.commit()
+                self._maybe_dispatch_tmux(chore)
                 return _response(request_id, serialize_chore(chore))
             if method == "validate_chain_integrity":
                 errors = validate_chain_integrity({chore.id: chore for chore in repo.list_all()})
@@ -210,6 +223,7 @@ class MCPServer:
 
                 self._signals.check(chore, on_complete, on_exit)
                 uow.commit()
+                self._maybe_dispatch_tmux(chore)
                 return _response(request_id, {"events": events, "chore": serialize_chore(chore)})
         except KeyError as exc:
             uow.rollback()
