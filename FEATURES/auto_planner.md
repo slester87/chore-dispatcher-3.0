@@ -18,6 +18,9 @@ When the HTTP server starts and there are no active chores, automatically launch
 - Window naming for chores remains `role+chore_id` as already specified elsewhere.
 - The prompt should clearly state: “No active chores found. Describe the chore you want to plan.”
 - The PLANNER session should use its persona to guide the user through chore creation.
+- The PLANNER prompt should follow Rob Pike’s guidance:
+  - Start with the problem, not the solution.
+  - Clarify: What is actually hard here? What is the irreducible core of the problem? What must be true when the system is correct?
 - The session waits for user input; once input is provided, it should create a new chore in `PLAN` status and proceed with normal planner flow.
 
 ## Config & Flags
