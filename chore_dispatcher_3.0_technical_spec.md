@@ -184,6 +184,15 @@ chore_a.set_next_chore(chore_b)  # Creates A → B chain
 - **Auto-Creation**: Creates session if not exists
 - **Calls KIRO with Role Prompt + Chore instructions**: The critical component delivering value in this project is building a string out of a role prompt and the instructions needed to complete the chore, and then giving that string to a new process of KIRO called in the correct working directory for that KIRO to make the required changes. When the KIRO completes work on chore, it should automatically advance chore to the next state and tear down.
 
+#### Dispatch Triggers (Window/Panes)
+
+- **PLAN**: Create a new window for the planner.
+- **PLAN_REVIEW**: Add a review pane to the existing plan window.
+- **PLAN_READY**: Tear down the plan window after approval.
+- **WORK**: Create a new window for the worker.
+- **WORK_REVIEW**: Add a review pane to the existing work window.
+- **WORK_DONE**: Tear down the work window after approval.
+
 #### Window Naming Convention
 
 ```

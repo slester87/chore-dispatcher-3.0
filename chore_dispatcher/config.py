@@ -18,7 +18,7 @@ class Config:
     node_id: int = 0
     store_root: str = "../skips_chores"
     tmux_session: str = "chore-dispatcher"
-    tmux_enabled: bool = False
+    tmux_enabled: bool = True
     signal_dir: str = "/tmp/kiro_signals"
 
     auto_advance_plan_seconds: int = 5

@@ -12,7 +12,7 @@ from chore_dispatcher.repo.integrity import enforce_archive_exclusivity, find_or
 from chore_dispatcher.repo.persistence import serialize_chore
 from chore_dispatcher.repo.unit_of_work import FileUnitOfWork
 from chore_dispatcher.signals.signals import SignalWatcher
-from chore_dispatcher.tmux.dispatch import dispatch_chore_window
+from chore_dispatcher.tmux.dispatch import add_review_pane, dispatch_chore_window, teardown_window
 from chore_dispatcher.workflow.chain import validate_chain_integrity
 from chore_dispatcher.workflow.errors import TransitionError, ValidationError
 from chore_dispatcher.workflow.transitions import StateTransitionEngine
@@ -54,7 +54,12 @@ class MCPServer:
         if not self._tmux_enabled:
             return
         try:
-            dispatch_chore_window(self._config.tmux_session, chore)
+            if chore.status == ChoreStatus.PLAN or chore.status == ChoreStatus.WORK:
+                dispatch_chore_window(self._config.tmux_session, chore)
+            elif chore.status in {ChoreStatus.PLAN_REVIEW, ChoreStatus.WORK_REVIEW}:
+                add_review_pane(self._config.tmux_session, chore)
+            elif chore.status in {ChoreStatus.PLAN_READY, ChoreStatus.WORK_DONE}:
+                teardown_window(self._config.tmux_session, chore)
         except Exception:
             return
 

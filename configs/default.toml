@@ -3,7 +3,7 @@ node_id = 0
 store_root = "../skips_chores"
 
 tmux_session = "chore-dispatcher"
-tmux_enabled = false
+tmux_enabled = true
 signal_dir = "/tmp/kiro_signals"
 
 auto_advance_plan_seconds = 5

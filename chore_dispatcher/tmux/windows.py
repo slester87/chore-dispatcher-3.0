@@ -32,8 +32,7 @@ def create_window(session_name: str, chore: Chore, command: str | None = None) -
     run_tmux(args)
 
 
-def split_review_panes(session_name: str, window: str, left_cmd: str, right_cmd: str) -> None:
-    run_tmux(["split-window", "-t", f"{session_name}:{window}", "-h", left_cmd])
+def split_review_panes(session_name: str, window: str, right_cmd: str) -> None:
     run_tmux(["split-window", "-t", f"{session_name}:{window}", "-h", right_cmd])
 
 
