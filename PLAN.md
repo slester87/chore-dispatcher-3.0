@@ -199,7 +199,21 @@ This plan is a greenfield implementation based solely on the 3.0 technical spec.
 
 ---
 
-## Step 11 — TMUX Integration Core
+## Step 11 — MCP Server Skeleton (New)
+**Scope**
+- MCP server entrypoint, basic request routing, health/status command.
+
+**Files/Modules**
+- `chore_dispatcher/mcp/server.py`
+- `chore_dispatcher/tests/integration/test_mcp.py`
+
+**Acceptance Criteria**
+- Server starts and handles a basic health/status request.
+- Routing is structured for future tool/command handlers.
+
+---
+
+## Step 12 — TMUX Integration Core
 **Scope**
 - Session management, window/pane layout, naming.
 
@@ -215,7 +229,7 @@ This plan is a greenfield implementation based solely on the 3.0 technical spec.
 
 ---
 
-## Step 12 — Kiro CLI Integration
+## Step 13 — Kiro CLI Integration
 **Scope**
 - Prompt composition and wrapper invocation.
 
@@ -231,7 +245,7 @@ This plan is a greenfield implementation based solely on the 3.0 technical spec.
 
 ---
 
-## Step 13 — Lifecycle Manager
+## Step 14 — Lifecycle Manager
 **Scope**
 - Orchestrate transitions, timers, signals, tmux.
 
@@ -245,7 +259,7 @@ This plan is a greenfield implementation based solely on the 3.0 technical spec.
 
 ---
 
-## Step 14 — Archival Manager
+## Step 15 — Archival Manager
 **Scope**
 - Archive completed chores, remove from active.
 
@@ -259,7 +273,7 @@ This plan is a greenfield implementation based solely on the 3.0 technical spec.
 
 ---
 
-## Step 15 — Completion Standards & Quality Gates
+## Step 16 — Completion Standards & Quality Gates
 **Scope**
 - Enforce compile/lint/build/test checks pre‑DONE.
 
@@ -272,7 +286,7 @@ This plan is a greenfield implementation based solely on the 3.0 technical spec.
 
 ---
 
-## Step 16 — End‑to‑End & Performance Tests
+## Step 17 — End‑to‑End & Performance Tests
 **Scope**
 - Full workflow tests and stress cases.
 
@@ -283,4 +297,3 @@ This plan is a greenfield implementation based solely on the 3.0 technical spec.
 **Acceptance Criteria**
 - Workflow succeeds under normal conditions.
 - Bulk chore creation completes within acceptable time.
-
