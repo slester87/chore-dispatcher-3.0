@@ -7,7 +7,7 @@ from chore_dispatcher.mcp.server import MCPServer
 from chore_dispatcher.special import SPECIAL_CHORE_ID, SPECIAL_CHORE_NAME
 
 
-def _write_config(tmpdir: str, tmux_enabled: bool = True) -> str:
+def _write_config(tmpdir: str, tmux_enabled: bool = False) -> str:
     config_path = Path(tmpdir) / "config.toml"
     config_path.write_text(
         "node_id = 1\n"

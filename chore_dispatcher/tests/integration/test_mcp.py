@@ -16,6 +16,7 @@ def _write_config(tmpdir: str) -> str:
         "active_store_path = \"active.jsonl\"\n"
         "archive_store_path = \"archive.jsonl\"\n"
         f"signal_dir = \"{tmpdir}\"\n"
+        "tmux_enabled = false\n"
     )
     return str(config_path)
 
