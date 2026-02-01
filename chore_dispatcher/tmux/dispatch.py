@@ -11,13 +11,13 @@ from chore_dispatcher.tmux.windows import create_window, role_label, split_revie
 def _command_for_role(role: str, chore: Chore, kiro_command: str) -> str:
     prompt = build_role_prompt(chore)
     env_parts = [
-        f\"CHORE_ID={shlex.quote(str(chore.id))}\",
-        f\"CHORE_NAME={shlex.quote(chore.name)}\",
-        f\"CHORE_DESCRIPTION={shlex.quote(chore.description)}\",
-        f\"CHORE_STATUS={shlex.quote(chore.status.value)}\",
-        f\"CHORE_ROLE={shlex.quote(role.upper())}\",
+        f"CHORE_ID={shlex.quote(str(chore.id))}",
+        f"CHORE_NAME={shlex.quote(chore.name)}",
+        f"CHORE_DESCRIPTION={shlex.quote(chore.description)}",
+        f"CHORE_STATUS={shlex.quote(chore.status.value)}",
+        f"CHORE_ROLE={shlex.quote(role.upper())}",
     ]
-    return f\"{' '.join(env_parts)} {kiro_command} {shlex.quote(prompt)}\"
+    return f"{' '.join(env_parts)} {kiro_command} {shlex.quote(prompt)}"
 
 
 def dispatch_chore_window(session_name: str, chore: Chore, kiro_command: str) -> None:
