@@ -87,8 +87,19 @@ def load_active_and_archive(active_path: Path, archive_path: Path) -> tuple[dict
     return active, archive
 
 
-def save_chores(path: Path, chores: Iterable[Chore]) -> None:
+def _write_jsonl(path: Path, chores: Iterable[Chore]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("w", encoding="utf-8") as fh:
         for chore in chores:
             fh.write(json.dumps(serialize_chore(chore)) + "\n")
+
+
+def save_chores(path: Path, chores: Iterable[Chore]) -> None:
+    _write_jsonl(path, chores)
+
+
+def save_chores_atomic(path: Path, chores: Iterable[Chore]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    temp_path = path.with_suffix(path.suffix + ".tmp")
+    _write_jsonl(temp_path, chores)
+    temp_path.replace(path)
