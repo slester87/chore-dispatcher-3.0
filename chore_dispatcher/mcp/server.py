@@ -8,6 +8,7 @@ from typing import Any
 from chore_dispatcher.config import load_config
 from chore_dispatcher.id.snowflake import Snowflake
 from chore_dispatcher.models.status import ChoreStatus, next_status
+from chore_dispatcher.repo.integrity import find_orphan_subchores
 from chore_dispatcher.repo.persistence import serialize_chore
 from chore_dispatcher.repo.unit_of_work import FileUnitOfWork
 from chore_dispatcher.signals.signals import SignalWatcher
@@ -38,6 +39,23 @@ class MCPServer:
         uow.rollback()
         return chores
 
+    def list_all(self) -> list[dict[str, Any]]:
+        uow = FileUnitOfWork(self._config, self._snowflake.next_id)
+        uow.begin()
+        repo = uow.repository()
+        active = [serialize_chore(chore) for chore in repo.list_all()]
+        archive = [serialize_chore(chore) for chore in uow.archive_store.values()]
+        uow.rollback()
+        return active + archive
+
+    def _collect_sub_chores(self, chore: Any, recursive: bool) -> list[Any]:
+        collected = []
+        for sub in chore.get_sub_chores():
+            collected.append(sub)
+            if recursive:
+                collected.extend(self._collect_sub_chores(sub, True))
+        return collected
+
     def handle_request(self, payload: dict[str, Any]) -> dict[str, Any]:
         request_id = payload.get("id")
         method = payload.get("method")
@@ -48,6 +66,10 @@ class MCPServer:
 
         if method == "list":
             return _response(request_id, self.list_active())
+        if method == "list_active":
+            return _response(request_id, self.list_active())
+        if method == "list_all":
+            return _response(request_id, self.list_all())
 
         uow = FileUnitOfWork(self._config, self._snowflake.next_id)
         uow.begin()
@@ -80,7 +102,12 @@ class MCPServer:
                 uow.commit()
                 return _response(request_id, serialize_chore(chore) if chore else None)
             if method == "get_sub_chores":
-                chores = repo.get_sub_chores(params["parent_id"])
+                parent = repo.read(params["parent_id"])
+                if parent is None:
+                    uow.rollback()
+                    return _response(request_id, [])
+                recursive = bool(params.get("recursive", False))
+                chores = self._collect_sub_chores(parent, recursive)
                 uow.rollback()
                 return _response(request_id, [serialize_chore(chore) for chore in chores])
             if method == "get_parent_chore":
@@ -131,6 +158,18 @@ class MCPServer:
                 errors = validate_chain_integrity({chore.id: chore for chore in repo.list_all()})
                 uow.rollback()
                 return _response(request_id, {"errors": errors})
+            if method == "repair_integrity":
+                chores = {chore.id: chore for chore in repo.list_all()}
+                errors = validate_chain_integrity(chores)
+                orphans = find_orphan_subchores(chores)
+                uow.rollback()
+                return _response(
+                    request_id,
+                    {
+                        "errors": errors,
+                        "orphans": [serialize_chore(chore) for chore in orphans],
+                    },
+                )
             if method == "list_archive":
                 chores = list(uow.archive_store.values())
                 uow.rollback()

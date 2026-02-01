@@ -80,6 +80,8 @@ class TestMcpServer(unittest.TestCase):
 
             archive_list = server.handle_request({"id": 4, "method": "list_archive"})
             self.assertEqual(len(archive_list["result"]), 1)
+            list_all = server.handle_request({"id": 5, "method": "list_all"})
+            self.assertEqual(len(list_all["result"]), 1)
 
     def test_advance_to_next(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -104,6 +106,47 @@ class TestMcpServer(unittest.TestCase):
 
             read = server.handle_request({"id": 3, "method": "read", "params": {"id": chore_id}})
             self.assertEqual(read["result"]["status"], ChoreStatus.PLAN_REVIEW.value)
+
+    def test_get_sub_chores_recursive(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            server = MCPServer(_write_config(tmpdir))
+            parent = server.handle_request({"id": 1, "method": "create", "params": {"name": "Parent"}})
+            parent_id = parent["result"]["id"]
+            child = server.handle_request(
+                {"id": 2, "method": "create_sub_chore", "params": {"parent_id": parent_id, "name": "Child"}}
+            )
+            child_id = child["result"]["id"]
+            server.handle_request(
+                {"id": 3, "method": "create_sub_chore", "params": {"parent_id": child_id, "name": "Grandchild"}}
+            )
+
+            direct = server.handle_request(
+                {"id": 4, "method": "get_sub_chores", "params": {"parent_id": parent_id}}
+            )
+            self.assertEqual(len(direct["result"]), 1)
+
+            recursive = server.handle_request(
+                {"id": 5, "method": "get_sub_chores", "params": {"parent_id": parent_id, "recursive": True}}
+            )
+            self.assertEqual(len(recursive["result"]), 2)
+
+    def test_repair_integrity(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            server = MCPServer(_write_config(tmpdir))
+            parent = server.handle_request({"id": 1, "method": "create", "params": {"name": "Parent"}})
+            parent_id = parent["result"]["id"]
+            child = server.handle_request(
+                {"id": 2, "method": "create_sub_chore", "params": {"parent_id": parent_id, "name": "Child"}}
+            )
+            child_id = child["result"]["id"]
+
+            server.handle_request(
+                {"id": 3, "method": "update", "params": {"id": child_id, "fields": {"parent_chore_id": 999}}}
+            )
+
+            result = server.handle_request({"id": 4, "method": "repair_integrity"})
+            self.assertEqual(result["result"]["errors"], [])
+            self.assertEqual(len(result["result"]["orphans"]), 1)
 
 
 if __name__ == "__main__":
