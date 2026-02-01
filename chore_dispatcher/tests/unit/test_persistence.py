@@ -5,7 +5,12 @@ from pathlib import Path
 from chore_dispatcher.config import Config
 from chore_dispatcher.models.chore import Chore
 from chore_dispatcher.models.status import ChoreStatus
-from chore_dispatcher.repo.persistence import load_chores, resolve_store_paths, save_chores
+from chore_dispatcher.repo.persistence import (
+    load_active_and_archive,
+    load_chores,
+    resolve_store_paths,
+    save_chores,
+)
 
 
 class TestPersistence(unittest.TestCase):
@@ -37,6 +42,20 @@ class TestPersistence(unittest.TestCase):
             self.assertEqual(loaded_parent.get_sub_chores(), [loaded_child])
             self.assertIs(loaded_parent.get_next_chore(), loaded_child)
             self.assertEqual(loaded_child.parent_chore_id, loaded_parent.id)
+
+    def test_active_archive_exclusivity(self) -> None:
+        active = Chore(id=1, name="Active")
+        archive = Chore(id=1, name="Archived", status=ChoreStatus.WORK_DONE)
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            active_path = Path(tmpdir) / "active.jsonl"
+            archive_path = Path(tmpdir) / "archive.jsonl"
+            save_chores(active_path, [active])
+            save_chores(archive_path, [archive])
+
+            loaded_active, loaded_archive = load_active_and_archive(active_path, archive_path)
+            self.assertNotIn(1, loaded_active)
+            self.assertIn(1, loaded_archive)
 
 
 if __name__ == "__main__":

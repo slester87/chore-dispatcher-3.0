@@ -7,6 +7,7 @@ from typing import Iterable
 from chore_dispatcher.config import Config
 from chore_dispatcher.models.chore import Chore
 from chore_dispatcher.models.status import ChoreStatus
+from chore_dispatcher.repo.integrity import dedupe_chore_payloads, enforce_archive_exclusivity
 
 
 def resolve_store_paths(config: Config) -> tuple[Path, Path]:
@@ -51,15 +52,20 @@ def load_chores(path: Path) -> dict[int, Chore]:
     chores: dict[int, Chore] = {}
     pending_links: dict[int, dict] = {}
 
+    payloads: list[dict] = []
     with path.open("r", encoding="utf-8") as fh:
         for line in fh:
             line = line.strip()
             if not line:
                 continue
-            payload = json.loads(line)
-            chore = deserialize_chore(payload)
-            chores[chore.id] = chore
-            pending_links[chore.id] = payload
+            payloads.append(json.loads(line))
+
+    payloads, _ = dedupe_chore_payloads(payloads)
+
+    for payload in payloads:
+        chore = deserialize_chore(payload)
+        chores[chore.id] = chore
+        pending_links[chore.id] = payload
 
     for chore_id, payload in pending_links.items():
         chore = chores[chore_id]
@@ -72,6 +78,13 @@ def load_chores(path: Path) -> dict[int, Chore]:
         chore.sub_chores = [chores[sub_id] for sub_id in sub_ids if sub_id in chores]
 
     return chores
+
+
+def load_active_and_archive(active_path: Path, archive_path: Path) -> tuple[dict[int, Chore], dict[int, Chore]]:
+    active = load_chores(active_path)
+    archive = load_chores(archive_path)
+    enforce_archive_exclusivity(active, archive)
+    return active, archive
 
 
 def save_chores(path: Path, chores: Iterable[Chore]) -> None:
