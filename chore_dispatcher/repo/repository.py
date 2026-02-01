@@ -28,6 +28,8 @@ class ChoreRepository:
         for key, value in kwargs.items():
             if not hasattr(chore, key):
                 raise ValueError(f"Unknown field: {key}")
+            if key == "status" and isinstance(value, str):
+                value = ChoreStatus(value)
             setattr(chore, key, value)
         return chore
 

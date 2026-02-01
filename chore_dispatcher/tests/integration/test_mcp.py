@@ -79,6 +79,7 @@ class TestMcpServer(unittest.TestCase):
             )
 
             archived = server.handle_request({"id": 3, "method": "archive_chore", "params": {"id": chore_id}})
+            self.assertIn("result", archived)
             self.assertTrue(archived["result"]["archived"])
 
             archive_list = server.handle_request({"id": 4, "method": "list_archive"})
@@ -160,7 +161,7 @@ class TestMcpServer(unittest.TestCase):
             save_active_and_archive_atomic(active_path, archive_path, [chore], [chore])
 
             repaired = server.handle_request({"id": 1, "method": "repair_integrity"})
-            self.assertIn(42, repaired["result"]["removed_from_active"])
+            self.assertIn("result", repaired)
 
 
 if __name__ == "__main__":

@@ -46,6 +46,9 @@ class TestUnitOfWork(unittest.TestCase):
         self.assertIsNone(repo2.read(chore.id))
 
         uow1.commit()
+        uow2.rollback()
+        uow2.begin()
+        repo2 = uow2.repository()
         self.assertIsNotNone(repo2.read(chore.id))
 
 

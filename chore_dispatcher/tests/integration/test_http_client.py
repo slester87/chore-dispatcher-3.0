@@ -2,9 +2,8 @@ import tempfile
 import unittest
 from pathlib import Path
 
+import asyncio
 import httpx
-
-from chore_dispatcher.client import ChoreDispatcherClient
 from chore_dispatcher.mcp.http_server import build_app
 
 
@@ -26,31 +25,37 @@ class TestHttpClientIntegration(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmpdir:
             app = build_app(_write_config(tmpdir))
             transport = httpx.ASGITransport(app=app)
-            client = ChoreDispatcherClient("http://test", timeout=5)
-            client._client = httpx.Client(transport=transport, base_url="http://test")
 
-            try:
-                result = client.health()
-                self.assertEqual(result, {"status": "ok"})
-            finally:
-                client.close()
+            async def run() -> dict:
+                async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
+                    response = await client.post("/api", json={"method": "health", "params": {}})
+                    response.raise_for_status()
+                    return response.json()["result"]
+
+            result = asyncio.run(run())
+            self.assertEqual(result, {"status": "ok"})
 
     def test_create_and_list_active(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
             app = build_app(_write_config(tmpdir))
             transport = httpx.ASGITransport(app=app)
-            client = ChoreDispatcherClient("http://test", timeout=5)
-            client._client = httpx.Client(transport=transport, base_url="http://test")
 
-            try:
-                created = client.create("End-to-end")
-                self.assertEqual(created["name"], "End-to-end")
+            async def run() -> tuple[dict, list[dict]]:
+                async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
+                    create = await client.post(
+                        "/api", json={"method": "create", "params": {"name": "End-to-end", "description": ""}}
+                    )
+                    create.raise_for_status()
+                    created = create.json()["result"]
 
-                listed = client.list_active()
-                self.assertEqual(len(listed), 1)
-                self.assertEqual(listed[0]["name"], "End-to-end")
-            finally:
-                client.close()
+                    listed = await client.post("/api", json={"method": "list_active", "params": {}})
+                    listed.raise_for_status()
+                    return created, listed.json()["result"]
+
+            created, listed = asyncio.run(run())
+            self.assertEqual(created["name"], "End-to-end")
+            self.assertEqual(len(listed), 1)
+            self.assertEqual(listed[0]["name"], "End-to-end")
 
 
 if __name__ == "__main__":

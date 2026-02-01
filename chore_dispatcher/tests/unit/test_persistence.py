@@ -41,6 +41,7 @@ class TestPersistence(unittest.TestCase):
             self.assertEqual(loaded_parent.name, "Parent")
             self.assertEqual(loaded_child.status, ChoreStatus.WORK)
             self.assertEqual(loaded_parent.get_sub_chores(), [loaded_child])
+            loaded_parent.status = ChoreStatus.WORK_DONE
             self.assertIs(loaded_parent.get_next_chore(), loaded_child)
             self.assertEqual(loaded_child.parent_chore_id, loaded_parent.id)
 
