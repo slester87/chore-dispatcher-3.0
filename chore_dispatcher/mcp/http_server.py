@@ -133,6 +133,7 @@ def build_app(config_path: str | None = None) -> FastAPI:
     async def lifespan(_: FastAPI):
         event = {"event": "active_chores", "result": server.list_active()}
         print(json.dumps(event))
+        server.launch_bootstrap_planner()
         yield
 
     app = FastAPI(lifespan=lifespan)

@@ -4,8 +4,9 @@ from chore_dispatcher.models.chore import Chore
 import shlex
 
 from chore_dispatcher.prompts import build_role_prompt
-from chore_dispatcher.tmux.session import ensure_session, ensure_tmux_available, run_tmux
-from chore_dispatcher.tmux.windows import create_window, role_label, split_review_panes, window_name
+from chore_dispatcher.tmux.session import attach_session, ensure_session, ensure_tmux_available, run_tmux, session_exists
+from chore_dispatcher.tmux.windows import create_named_window, create_window, role_label, split_review_panes, window_name
+from chore_dispatcher.special import special_chore
 
 
 def _command_for_role(role: str, chore: Chore, kiro_command: str) -> str:
@@ -27,6 +28,17 @@ def dispatch_chore_window(session_name: str, chore: Chore, kiro_command: str) ->
     role = role_label(chore.status)
     cmd = _command_for_role(role, chore, kiro_command)
     create_window(session_name, chore.id, role, cmd)
+
+
+def dispatch_bootstrap_planner(session_name: str, kiro_command: str) -> None:
+    ensure_tmux_available()
+    chore = special_chore()
+    cmd = _command_for_role("Planner", chore, kiro_command)
+    if session_exists(session_name):
+        create_named_window(session_name, "planner", cmd)
+    else:
+        run_tmux(["new-session", "-d", "-s", session_name, "-n", "planner", cmd])
+    attach_session(session_name)
 
 
 def add_review_pane(session_name: str, chore: Chore, kiro_command: str) -> None:

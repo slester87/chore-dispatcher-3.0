@@ -12,7 +12,8 @@ from chore_dispatcher.repo.integrity import enforce_archive_exclusivity, find_or
 from chore_dispatcher.repo.persistence import serialize_chore
 from chore_dispatcher.repo.unit_of_work import FileUnitOfWork
 from chore_dispatcher.signals.signals import SignalWatcher
-from chore_dispatcher.tmux.dispatch import add_review_pane, dispatch_chore_window, teardown_window
+from chore_dispatcher.tmux.dispatch import add_review_pane, dispatch_bootstrap_planner, dispatch_chore_window, teardown_window
+from chore_dispatcher.special import SPECIAL_CHORE_ID, special_chore
 from chore_dispatcher.workflow.chain import validate_chain_integrity
 from chore_dispatcher.workflow.errors import TransitionError, ValidationError
 from chore_dispatcher.workflow.transitions import StateTransitionEngine
@@ -63,6 +64,14 @@ class MCPServer:
         except Exception:
             return
 
+    def launch_bootstrap_planner(self) -> None:
+        if not self._tmux_enabled:
+            return
+        try:
+            dispatch_bootstrap_planner(self._config.tmux_session, self._config.kiro_command)
+        except Exception:
+            return
+
     def _collect_sub_chores(self, chore: Any, recursive: bool) -> list[Any]:
         collected = []
         for sub in chore.get_sub_chores():
@@ -97,10 +106,14 @@ class MCPServer:
                 self._maybe_dispatch_tmux(chore)
                 return _response(request_id, serialize_chore(chore))
             if method == "read":
+                if params["id"] == SPECIAL_CHORE_ID:
+                    return _response(request_id, serialize_chore(special_chore()))
                 chore = repo.read(params["id"])
                 uow.rollback()
                 return _response(request_id, serialize_chore(chore) if chore else None)
             if method == "update":
+                if params["id"] == SPECIAL_CHORE_ID:
+                    raise ValidationError("Special chore is read-only")
                 chore = repo.update(params["id"], **params.get("fields", {}))
                 uow.commit()
                 return _response(request_id, serialize_chore(chore) if chore else None)
@@ -248,6 +261,7 @@ def run() -> int:
     config_path = os.environ.get("CHORE_DISPATCHER_CONFIG")
     server = MCPServer(config_path)
 
+    server.launch_bootstrap_planner()
     sys.stdout.write(json.dumps({"event": "active_chores", "result": server.list_active()}) + "\n")
     sys.stdout.flush()
 

@@ -3,7 +3,7 @@ from __future__ import annotations
 import re
 
 from chore_dispatcher.models.status import ChoreStatus
-from chore_dispatcher.tmux.session import run_tmux
+from chore_dispatcher.tmux.session import run_tmux, window_exists
 
 
 _SLUG_RE = re.compile(r"[^a-z0-9-]+")
@@ -24,6 +24,15 @@ def window_name(chore_id: int, role: str) -> str:
 
 def create_window(session_name: str, chore_id: int, role: str, command: str | None = None) -> None:
     name = window_name(chore_id, role)
+    args: list[str] = ["new-window", "-t", session_name, "-n", name]
+    if command:
+        args.append(command)
+    run_tmux(args)
+
+
+def create_named_window(session_name: str, name: str, command: str | None = None) -> None:
+    if window_exists(session_name, name):
+        return
     args: list[str] = ["new-window", "-t", session_name, "-n", name]
     if command:
         args.append(command)
