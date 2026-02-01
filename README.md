@@ -60,8 +60,6 @@ chore-dispatcher-http list-active
 
 ## Technical Specification
 
-Below is the full 3.0 technical spec (mirrored here for convenience).
-
 # Chore Dispatcher System - Technical Specification
 
 ## Overview
@@ -84,36 +82,35 @@ PLAN → PLAN_REVIEW → PLAN_READY → WORK → WORK_REVIEW → WORK_DONE
 
   - PLAN → create planner window
   - PLAN_REVIEW → create plan review window
-  - PLAN_READY → tear down plan window and plan review window
+  - PLAN_READY → Human USER looks at this. Wait for USER approval. Once USER accepts PLAN, tear down planner window and plan review window
   - WORK → create worker window
   - WORK_REVIEW → create work review window
-  - WORK_DONE → tear down worker window and work review window
+  - WORK_DONE → Human USER looks at this. Wait for USER approval of work. Once USER accepts WORK, tear down worker window and work review window
 
 #### State Definitions
 
 
 1. **PLAN** - Implementation planning phase with detailed steps
 2. **PLAN_REVIEW** - Review of the implementation plan
-3. **PLAN_READY** - Plan approved, ready for implementation
+3. **PLAN_READY** - Plan approved by USER (Wait state), ready for implementation
 4. **WORK** - Active development/implementation phase
 5. **WORK_REVIEW** - Review of completed work
-6. **WORK_DONE** - Work complete and approved (terminal state)
+6. **WORK_DONE** - Work complete and User approved (terminal state)
 
 #### Roles
 
-The system uses exactly four roles:
+The agents adopt exactly four roles:
 
 1. **PLANNER**
 2. **PLAN_REVIEWER**
 3. **WORKER**
 4. **WORK_REVIEWER**
 
-Design responsibilities are handled within the PLANNER phase; there is no separate design role or state.
+Design responsibilities are handled within the PLANNER phase.
 
 #### State Transition Rules
 
-- States advance linearly through the workflow
-- Only one state transition per advancement operation
+- Only one state transition per transition operation
 - Sub-chores must be complete before parent chore can advance
 - Review states can approve (advance) or reject (return to previous work state)
 - Terminal state (WORK_DONE) cannot advance further
@@ -257,16 +254,16 @@ chore_a.set_next_chore(chore_b)  # Creates A → B chain
 - **Session Isolation**: Dedicated session for all chore windows
 - **Session Persistence**: Survives terminal disconnection
 - **Auto-Creation**: Creates session if not exists
-- **Calls KIRO with Role Prompt + Chore instructions**: The critical component delivering value in this project is building a string out of a role prompt and the instructions needed to complete the chore, and then giving that string to a new process of KIRO called in the correct working directory for that KIRO to make the required changes. When the KIRO completes work on chore, it should automatically advance chore to the next state and tear down.
+- **Calls KIRO with Role Prompt + Chore instructions**: The critical component delivering value in this project is building a string out of a role prompt and the instructions needed to complete the chore, and then giving that string to a new process of KIRO called in the correct working directory for that KIRO to make the required changes. 
 
 #### Dispatch Triggers (Windows Only)
 
 - **PLAN**: Create a new window for the planner.
 - **PLAN_REVIEW**: Create a new window for the plan reviewer.
-- **PLAN_READY**: Tear down the plan window and plan review window after approval.
+- **PLAN_READY**: Tear down the plan window and plan review window after USER approval of PLAN.
 - **WORK**: Create a new window for the worker.
 - **WORK_REVIEW**: Create a new window for the work reviewer.
-- **WORK_DONE**: Tear down the worker window and work review window after approval.
+- **WORK_DONE**: Tear down the worker window and work review window after USER approval of WORK.
 
 #### Window Naming Convention
 
