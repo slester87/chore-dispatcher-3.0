@@ -17,9 +17,6 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           python -m pip install ruff
-      - name: Lint
+      - name: CI
         run: |
-          ruff check .
-      - name: Tests
-        run: |
-          python -m unittest discover -s chore_dispatcher/tests
+          make ci
