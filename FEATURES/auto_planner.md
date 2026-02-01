@@ -14,6 +14,8 @@ When the HTTP server starts and there are no active chores, automatically launch
 - Launch a Kiro prompt in a dedicated tmux window named `chore-dispatcher:planner`.
 - The planner window should be the default first window in the tmux session.
 - Chores created from the planner should create their windows in the same session, positioned to the right of the planner window.
+- If the `chore-dispatcher` session already exists, attach/use it; otherwise create it.
+- Window naming for chores remains `role+chore_id` as already specified elsewhere.
 - The prompt should clearly state: “No active chores found. Describe the chore you want to plan.”
 - The PLANNER session should use its persona to guide the user through chore creation.
 - The session waits for user input; once input is provided, it should create a new chore in `PLAN` status and proceed with normal planner flow.
