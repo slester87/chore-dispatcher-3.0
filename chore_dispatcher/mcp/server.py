@@ -7,9 +7,10 @@ from typing import Any
 
 from chore_dispatcher.config import load_config
 from chore_dispatcher.id.snowflake import Snowflake
-from chore_dispatcher.models.status import ChoreStatus
+from chore_dispatcher.models.status import ChoreStatus, next_status
 from chore_dispatcher.repo.persistence import serialize_chore
 from chore_dispatcher.repo.unit_of_work import FileUnitOfWork
+from chore_dispatcher.signals.signals import SignalWatcher
 from chore_dispatcher.workflow.chain import validate_chain_integrity
 from chore_dispatcher.workflow.errors import TransitionError, ValidationError
 from chore_dispatcher.workflow.transitions import StateTransitionEngine
@@ -27,6 +28,7 @@ class MCPServer:
         self._snowflake = Snowflake(config.node_id)
         self._config = config
         self._transitions = StateTransitionEngine()
+        self._signals = SignalWatcher(config.signal_dir, poll_interval=1.0)
 
     def list_active(self) -> list[dict[str, Any]]:
         uow = FileUnitOfWork(self._config, self._snowflake.next_id)
@@ -114,6 +116,17 @@ class MCPServer:
                 self._transitions.execute_transition(chore, to_status)
                 uow.commit()
                 return _response(request_id, serialize_chore(chore))
+            if method == "advance_to_next":
+                chore = repo.read(params["id"])
+                if chore is None:
+                    uow.rollback()
+                    return _response(request_id, None)
+                expected = next_status(chore.status)
+                if expected is None:
+                    raise TransitionError("No further status available")
+                self._transitions.execute_transition(chore, expected)
+                uow.commit()
+                return _response(request_id, serialize_chore(chore))
             if method == "validate_chain_integrity":
                 errors = validate_chain_integrity({chore.id: chore for chore in repo.list_all()})
                 uow.rollback()
@@ -133,6 +146,27 @@ class MCPServer:
                 repo.delete(chore.id)
                 uow.commit()
                 return _response(request_id, {"archived": True, "id": chore.id})
+            if method == "process_signals":
+                chore = repo.read(params["id"])
+                if chore is None:
+                    uow.rollback()
+                    return _response(request_id, None)
+
+                events: list[str] = []
+
+                def on_complete(ch: Any) -> None:
+                    events.append("complete")
+                    expected = next_status(ch.status)
+                    if expected is None:
+                        raise TransitionError("No further status available")
+                    self._transitions.execute_transition(ch, expected)
+
+                def on_exit(ch: Any) -> None:
+                    events.append("exit")
+
+                self._signals.check(chore, on_complete, on_exit)
+                uow.commit()
+                return _response(request_id, {"events": events, "chore": serialize_chore(chore)})
         except KeyError as exc:
             uow.rollback()
             return _response(request_id, error=f"Missing parameter: {exc.args[0]}")

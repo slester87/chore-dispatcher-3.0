@@ -13,6 +13,7 @@ def _write_config(tmpdir: str) -> str:
         f"store_root = \"{tmpdir}\"\n"
         "active_store_path = \"active.jsonl\"\n"
         "archive_store_path = \"archive.jsonl\"\n"
+        f"signal_dir = \"{tmpdir}\"\n"
     )
     return str(config_path)
 
@@ -79,6 +80,30 @@ class TestMcpServer(unittest.TestCase):
 
             archive_list = server.handle_request({"id": 4, "method": "list_archive"})
             self.assertEqual(len(archive_list["result"]), 1)
+
+    def test_advance_to_next(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            server = MCPServer(_write_config(tmpdir))
+            created = server.handle_request({"id": 1, "method": "create", "params": {"name": "Advance"}})
+            chore_id = created["result"]["id"]
+
+            advanced = server.handle_request({"id": 2, "method": "advance_to_next", "params": {"id": chore_id}})
+            self.assertEqual(advanced["result"]["status"], ChoreStatus.PLAN_REVIEW.value)
+
+    def test_process_signals(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            server = MCPServer(_write_config(tmpdir))
+            created = server.handle_request({"id": 1, "method": "create", "params": {"name": "Signal"}})
+            chore_id = created["result"]["id"]
+
+            signal_path = Path(tmpdir) / f"chore_{chore_id}_complete"
+            signal_path.write_text("done")
+
+            processed = server.handle_request({"id": 2, "method": "process_signals", "params": {"id": chore_id}})
+            self.assertIn("complete", processed["result"]["events"])
+
+            read = server.handle_request({"id": 3, "method": "read", "params": {"id": chore_id}})
+            self.assertEqual(read["result"]["status"], ChoreStatus.PLAN_REVIEW.value)
 
 
 if __name__ == "__main__":
