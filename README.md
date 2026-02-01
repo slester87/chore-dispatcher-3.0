@@ -1,3 +1,7 @@
+Chores, dispatched and tracked.
+Watch it unfold in TMUX.
+Agentic Ballet
+
 # Chore Dispatcher 3.0
 
 ![ci](https://github.com/slester87/chore-dispatcher-3.0/actions/workflows/ci.yml/badge.svg)
