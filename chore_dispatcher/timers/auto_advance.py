@@ -20,7 +20,7 @@ class AutoAdvanceConfig:
 class AutoAdvanceTimer:
     def __init__(self, config: AutoAdvanceConfig | None = None) -> None:
         self._config = config or AutoAdvanceConfig()
-        self._lock = threading.Lock()
+        self._lock = threading.RLock()
         self._timers: dict[int, threading.Timer] = {}
 
     def schedule(self, chore: Chore, callback: Callable[[Chore], None]) -> None:
