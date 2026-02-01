@@ -49,6 +49,33 @@ def create_named_window(session_name: str, name: str, command: str | None = None
         run_tmux(args)
 
 
+def ensure_window_index(session_name: str, name: str, index: int) -> None:
+    result = subprocess.run(
+        ["tmux", "list-windows", "-t", session_name, "-F", "#{window_index}:#{window_name}"],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.DEVNULL,
+        text=True,
+        check=False,
+    )
+    if result.returncode != 0:
+        return
+    window_indices: dict[str, int] = {}
+    for line in result.stdout.splitlines():
+        if ":" not in line:
+            continue
+        raw_index, raw_name = line.split(":", 1)
+        if not raw_index.isdigit():
+            continue
+        window_indices[raw_name.strip()] = int(raw_index)
+    current_index = window_indices.get(name)
+    if current_index is None or current_index == index:
+        return
+    if index in window_indices.values():
+        run_tmux(["swap-window", "-s", f"{session_name}:{name}", "-t", f"{session_name}:{index}"])
+        return
+    run_tmux(["move-window", "-s", f"{session_name}:{name}", "-t", f"{session_name}:{index}"])
+
+
 def role_label(status: ChoreStatus) -> str:
     if status == ChoreStatus.PLAN:
         return "Planner"

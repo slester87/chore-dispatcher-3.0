@@ -254,6 +254,7 @@ chore_a.set_next_chore(chore_b)  # Creates A → B chain
 - **Session Isolation**: Dedicated session for all chore windows
 - **Session Persistence**: Survives terminal disconnection
 - **Auto-Creation**: Creates session if not exists
+- **Bootstrap Planner**: A persistent planner window is created (or reused) and kept at window index 0.
 - **Calls KIRO with Role Prompt + Chore instructions**: The critical component delivering value in this project is building a string out of a role prompt and the instructions needed to complete the chore, and then giving that string to a new process of KIRO called in the correct working directory for that KIRO to make the required changes. 
 
 #### Dispatch Triggers (Windows Only)
