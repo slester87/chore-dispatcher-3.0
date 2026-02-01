@@ -7,9 +7,9 @@ Greenfield implementation of the Chore Dispatcher system per the 3.0 technical s
 
 ## TMUX behavior (default on)
 
-- PLAN: create a new window for the planner.
-- PLAN_REVIEW: add a review pane to the existing plan window.
-- PLAN_READY: tear down the plan window.
-- WORK: create a new window for the worker.
-- WORK_REVIEW: add a review pane to the existing work window.
-- WORK_DONE: tear down the work window.
+- PLAN: create `chore<id>_Planner`.
+- PLAN_REVIEW: add a review pane to `chore<id>_Planner`.
+- PLAN_READY: tear down `chore<id>_Planner`.
+- WORK: create `chore<id>_Worker`.
+- WORK_REVIEW: add a review pane to `chore<id>_Worker`.
+- WORK_DONE: tear down `chore<id>_Worker`.

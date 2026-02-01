@@ -3,7 +3,6 @@ from __future__ import annotations
 import re
 from typing import Iterable
 
-from chore_dispatcher.models.chore import Chore
 from chore_dispatcher.models.status import ChoreStatus
 from chore_dispatcher.tmux.session import run_tmux
 
@@ -20,12 +19,12 @@ def slugify(name: str, max_len: int = 30) -> str:
     return slug[:max_len]
 
 
-def window_name(chore: Chore) -> str:
-    return f"chore-{chore.id}-{slugify(chore.name)}"
+def window_name(chore_id: int, role: str) -> str:
+    return f"chore{chore_id}_{role}"
 
 
-def create_window(session_name: str, chore: Chore, command: str | None = None) -> None:
-    name = window_name(chore)
+def create_window(session_name: str, chore_id: int, role: str, command: str | None = None) -> None:
+    name = window_name(chore_id, role)
     args: list[str] = ["new-window", "-t", session_name, "-n", name]
     if command:
         args.append(command)
@@ -36,7 +35,7 @@ def split_review_panes(session_name: str, window: str, right_cmd: str) -> None:
     run_tmux(["split-window", "-t", f"{session_name}:{window}", "-h", right_cmd])
 
 
-def layout_for_status(status: ChoreStatus) -> str:
-    if status in {ChoreStatus.PLAN_REVIEW, ChoreStatus.WORK_REVIEW}:
-        return "review"
-    return "single"
+def role_label(status: ChoreStatus) -> str:
+    if status in {ChoreStatus.PLAN, ChoreStatus.PLAN_REVIEW, ChoreStatus.PLAN_READY}:
+        return "Planner"
+    return "Worker"

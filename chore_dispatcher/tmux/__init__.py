@@ -1,6 +1,6 @@
 from chore_dispatcher.tmux.dispatch import add_review_pane, dispatch_chore_window, teardown_window
 from chore_dispatcher.tmux.session import TmuxError, ensure_session, ensure_tmux_available, run_tmux, session_exists
-from chore_dispatcher.tmux.windows import create_window, slugify, split_review_panes, window_name
+from chore_dispatcher.tmux.windows import create_window, role_label, slugify, split_review_panes, window_name
 
 __all__ = [
     "TmuxError",
@@ -12,6 +12,7 @@ __all__ = [
     "window_name",
     "create_window",
     "split_review_panes",
+    "role_label",
     "dispatch_chore_window",
     "add_review_pane",
     "teardown_window",

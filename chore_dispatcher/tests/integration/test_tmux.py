@@ -1,8 +1,7 @@
 import unittest
 
-from chore_dispatcher.models.chore import Chore
 from chore_dispatcher.models.status import ChoreStatus
-from chore_dispatcher.tmux.windows import layout_for_status, slugify, window_name
+from chore_dispatcher.tmux.windows import role_label, slugify, window_name
 
 
 class TestTmuxHelpers(unittest.TestCase):
@@ -11,12 +10,13 @@ class TestTmuxHelpers(unittest.TestCase):
         self.assertEqual(slugify("***"), "chore")
 
     def test_window_name(self) -> None:
-        chore = Chore(id=42, name="Test Name")
-        self.assertTrue(window_name(chore).startswith("chore-42-"))
+        self.assertEqual(window_name(42, "Planner"), "chore42_Planner")
 
-    def test_layout_for_status(self) -> None:
-        self.assertEqual(layout_for_status(ChoreStatus.PLAN), "single")
-        self.assertEqual(layout_for_status(ChoreStatus.WORK_REVIEW), "review")
+    def test_role_label(self) -> None:
+        self.assertEqual(role_label(ChoreStatus.PLAN), "Planner")
+        self.assertEqual(role_label(ChoreStatus.PLAN_REVIEW), "Planner")
+        self.assertEqual(role_label(ChoreStatus.WORK), "Worker")
+        self.assertEqual(role_label(ChoreStatus.WORK_REVIEW), "Worker")
 
 
 if __name__ == "__main__":

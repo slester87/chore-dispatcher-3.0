@@ -4,6 +4,7 @@
 
 The Chore Dispatcher is a chore management system built on an MCP server that uses agents to work through a structured 6-stage workflow with unique identifiers, chaining capabilities, and automated tmux-based execution environments. Each chore progresses through defined states with validation, review processes, and automatic advancement capabilities.
 
+
 ## Core Architecture
 
 ### 1. Workflow State Machine
@@ -13,6 +14,16 @@ The system implements a linear 6-stage workflow:
 ```
 PLAN → PLAN_REVIEW → PLAN_READY → WORK → WORK_REVIEW → WORK_DONE
 ```
+
+#### 1.1 TMUX Workflow Intention
+ TMUX dispatch rules (implementation)
+
+  - PLAN → create planner window
+  - PLAN_REVIEW → add review pane to plan window
+  - PLAN_READY → tear down plan window
+  - WORK → create worker window
+  - WORK_REVIEW → add review pane to work window
+  - WORK_DONE → tear down work window
 
 #### State Definitions
 
@@ -196,12 +207,12 @@ chore_a.set_next_chore(chore_b)  # Creates A → B chain
 #### Window Naming Convention
 
 ```
-chore-{chore_id}-{name_slug}
+chore{chore_id}_{Planner|Worker}
 ```
 
-- **Name Slug**: URL-friendly version of chore name (30 char limit)
+- **Planner Window**: Used for PLAN and PLAN_REVIEW states
+- **Worker Window**: Used for WORK and WORK_REVIEW states
 - **Unique Identification**: Chore ID ensures uniqueness
-- **Status Integration**: Optional status suffix for clarity
 
 #### Window Types by Status
 
