@@ -31,6 +31,16 @@ export CHORE_DISPATCHER_CONFIG=/path/to/config.toml
 python -m chore_dispatcher.mcp.http_server
 ```
 
+## HTTP client usage
+
+```
+from chore_dispatcher.client import ChoreDispatcherClient
+
+with ChoreDispatcherClient("http://127.0.0.1:8080") as client:
+    chore = client.create("Example chore")
+    print(chore["id"])
+```
+
 ---
 
 ## Technical Specification
@@ -43,6 +53,7 @@ Below is the full 3.0 technical spec (mirrored here for convenience).
 
 The Chore Dispatcher is a chore management system built on an MCP server that uses agents to work through a structured 6-stage workflow with unique identifiers, chaining capabilities, and automated tmux-based execution environments. Each chore progresses through defined states with validation, review processes, and automatic advancement capabilities.
 
+
 ## Core Architecture
 
 ### 1. Workflow State Machine
@@ -52,6 +63,16 @@ The system implements a linear 6-stage workflow:
 ```
 PLAN → PLAN_REVIEW → PLAN_READY → WORK → WORK_REVIEW → WORK_DONE
 ```
+
+#### 1.1 TMUX Workflow Intention
+ TMUX dispatch rules (implementation)
+
+  - PLAN → create planner window
+  - PLAN_REVIEW → add review pane to plan window
+  - PLAN_READY → tear down plan window
+  - WORK → create worker window
+  - WORK_REVIEW → add review pane to work window
+  - WORK_DONE → tear down work window
 
 #### State Definitions
 
@@ -416,6 +437,42 @@ class DispatcherHooks:
     def on_chore_state_change(chore: Chore, old_status: ChoreStatus) -> None
     def on_chore_deleted(chore_id: int) -> None
 ```
+
+#### MCP HTTP Interface
+
+- **Server**: FastAPI + FastMCP implementation.
+- **Mounts**: MCP tools at configurable `mcp_path` (default `/mcp`).
+- **JSON API**: Simple HTTP endpoint at `/api` for production clients.
+
+**HTTP API Request (POST /api):**
+
+```json
+{
+  "id": "optional",
+  "method": "create|read|update|delete|list_active|list_all|...",
+  "params": { "..." : "..." }
+}
+```
+
+**HTTP API Response:**
+
+```json
+{
+  "id": "optional",
+  "result": { "..." : "..." }
+}
+```
+
+Errors return:
+
+```json
+{
+  "id": "optional",
+  "error": { "message": "..." }
+}
+```
+
+**Client Module**: A production-ready HTTP client is provided for the `/api` endpoint.
 
 #### TMUX Integration
 

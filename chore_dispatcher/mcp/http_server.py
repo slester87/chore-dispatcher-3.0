@@ -6,6 +6,7 @@ from typing import Any
 
 import uvicorn
 from fastapi import FastAPI
+from pydantic import BaseModel
 from mcp.server.fastmcp import FastMCP
 
 from chore_dispatcher.config import load_config
@@ -125,6 +126,18 @@ def build_app(config_path: str | None = None) -> FastAPI:
 
     app = FastAPI(lifespan=lifespan)
     app.mount(config.mcp_path, mcp.app)
+
+    class ApiRequest(BaseModel):
+        id: Any | None = None
+        method: str
+        params: dict[str, Any] | None = None
+
+    @app.post("/api")
+    def api_call(payload: ApiRequest) -> dict[str, Any]:
+        return server.handle_request(
+            {"id": payload.id, "method": payload.method, "params": payload.params or {}}
+        )
+
     return app
 
 

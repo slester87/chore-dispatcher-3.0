@@ -11,7 +11,9 @@ requires-python = ">=3.10"
 license = { text = "Proprietary" }
 dependencies = [
     "fastapi",
+    "httpx",
     "mcp",
+    "pydantic",
     "uvicorn",
 ]
 

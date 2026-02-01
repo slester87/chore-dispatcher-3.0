@@ -389,6 +389,42 @@ class DispatcherHooks:
     def on_chore_deleted(chore_id: int) -> None
 ```
 
+#### MCP HTTP Interface
+
+- **Server**: FastAPI + FastMCP implementation.
+- **Mounts**: MCP tools at configurable `mcp_path` (default `/mcp`).
+- **JSON API**: Simple HTTP endpoint at `/api` for production clients.
+
+**HTTP API Request (POST /api):**
+
+```json
+{
+  "id": "optional",
+  "method": "create|read|update|delete|list_active|list_all|...",
+  "params": { "..." : "..." }
+}
+```
+
+**HTTP API Response:**
+
+```json
+{
+  "id": "optional",
+  "result": { "..." : "..." }
+}
+```
+
+Errors return:
+
+```json
+{
+  "id": "optional",
+  "error": { "message": "..." }
+}
+```
+
+**Client Module**: A production-ready HTTP client is provided for the `/api` endpoint.
+
 #### TMUX Integration
 
 - **Window Creation**: Automatic window creation on chore dispatch which invokes KIRO with a dynamically generated string corresponding to the chore body such that a new process of KIRO is spun up to work on the chore body in the correct role for the current phase of the chore (Planner/PlanReviewer/Worker/WorkReviewer)
