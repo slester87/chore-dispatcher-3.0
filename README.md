@@ -24,6 +24,8 @@ By default it binds to `127.0.0.1:8080` and mounts MCP at `/mcp` (configurable i
 python -m chore_dispatcher.mcp.http_server
 ```
 
+The Kiro command used for tmux windows is configured via `kiro_command` in `configs/default.toml`.
+
 To override config:
 
 ```

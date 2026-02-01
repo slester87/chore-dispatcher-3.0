@@ -55,9 +55,9 @@ class MCPServer:
             return
         try:
             if chore.status == ChoreStatus.PLAN or chore.status == ChoreStatus.WORK:
-                dispatch_chore_window(self._config.tmux_session, chore)
+                dispatch_chore_window(self._config.tmux_session, chore, self._config.kiro_command)
             elif chore.status in {ChoreStatus.PLAN_REVIEW, ChoreStatus.WORK_REVIEW}:
-                add_review_pane(self._config.tmux_session, chore)
+                add_review_pane(self._config.tmux_session, chore, self._config.kiro_command)
             elif chore.status in {ChoreStatus.PLAN_READY, ChoreStatus.WORK_DONE}:
                 teardown_window(self._config.tmux_session, chore)
         except Exception:

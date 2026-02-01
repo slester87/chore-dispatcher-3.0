@@ -9,6 +9,7 @@ signal_dir = "/tmp/kiro_signals"
 http_host = "127.0.0.1"
 http_port = 8080
 mcp_path = "/mcp"
+kiro_command = "/Applications/Kiro CLI.app/Contents/MacOS/kiro-cli chat --trust-tools @chore-dispatcher,read,write,web_fetch,web_search,grep,glob,shell,code"
 
 auto_advance_plan_seconds = 5
 auto_advance_work_seconds = 10

@@ -23,6 +23,7 @@ class Config:
     http_host: str = "127.0.0.1"
     http_port: int = 8080
     mcp_path: str = "/mcp"
+    kiro_command: str = "/Applications/Kiro CLI.app/Contents/MacOS/kiro-cli chat --trust-tools @chore-dispatcher,read,write,web_fetch,web_search,grep,glob,shell,code"
 
     auto_advance_plan_seconds: int = 5
     auto_advance_work_seconds: int = 10

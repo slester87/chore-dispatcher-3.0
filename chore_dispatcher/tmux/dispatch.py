@@ -5,24 +5,24 @@ from chore_dispatcher.tmux.session import ensure_session, ensure_tmux_available,
 from chore_dispatcher.tmux.windows import create_window, role_label, split_review_panes, window_name
 
 
-def _command_for_role(role: str, chore: Chore) -> str:
-    return f"echo {role} for chore {chore.id}; exec $SHELL"
+def _command_for_role(role: str, chore: Chore, kiro_command: str) -> str:
+    return f"{kiro_command}"
 
 
-def dispatch_chore_window(session_name: str, chore: Chore) -> None:
+def dispatch_chore_window(session_name: str, chore: Chore, kiro_command: str) -> None:
     ensure_tmux_available()
     ensure_session(session_name)
 
     role = role_label(chore.status)
-    cmd = _command_for_role(role, chore)
+    cmd = _command_for_role(role, chore, kiro_command)
     create_window(session_name, chore.id, role, cmd)
 
 
-def add_review_pane(session_name: str, chore: Chore) -> None:
+def add_review_pane(session_name: str, chore: Chore, kiro_command: str) -> None:
     ensure_tmux_available()
     ensure_session(session_name)
     window = window_name(chore.id, role_label(chore.status))
-    reviewer_cmd = _command_for_role(role_label(chore.status), chore)
+    reviewer_cmd = _command_for_role(role_label(chore.status), chore, kiro_command)
     split_review_panes(session_name, window, reviewer_cmd)
 
 
