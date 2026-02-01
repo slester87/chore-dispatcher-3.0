@@ -15,3 +15,7 @@ chore-dispatcher = "chore_dispatcher.cli:main"
 
 [tool.setuptools]
 packages = ["chore_dispatcher"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
