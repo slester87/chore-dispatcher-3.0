@@ -10,6 +10,9 @@ from chore_dispatcher.id.snowflake import Snowflake
 from chore_dispatcher.models.status import ChoreStatus
 from chore_dispatcher.repo.persistence import serialize_chore
 from chore_dispatcher.repo.unit_of_work import FileUnitOfWork
+from chore_dispatcher.workflow.chain import validate_chain_integrity
+from chore_dispatcher.workflow.errors import TransitionError, ValidationError
+from chore_dispatcher.workflow.transitions import StateTransitionEngine
 
 
 def _response(request_id: Any, result: Any | None = None, error: str | None = None) -> dict[str, Any]:
@@ -23,6 +26,7 @@ class MCPServer:
         config = load_config(config_path)
         self._snowflake = Snowflake(config.node_id)
         self._config = config
+        self._transitions = StateTransitionEngine()
 
     def list_active(self) -> list[dict[str, Any]]:
         uow = FileUnitOfWork(self._config, self._snowflake.next_id)
@@ -69,9 +73,72 @@ class MCPServer:
                 matches = repo.find_by_status(status)
                 uow.rollback()
                 return _response(request_id, [serialize_chore(chore) for chore in matches])
+            if method == "create_sub_chore":
+                chore = repo.create_sub_chore(params["parent_id"], params["name"], params.get("description", ""))
+                uow.commit()
+                return _response(request_id, serialize_chore(chore) if chore else None)
+            if method == "get_sub_chores":
+                chores = repo.get_sub_chores(params["parent_id"])
+                uow.rollback()
+                return _response(request_id, [serialize_chore(chore) for chore in chores])
+            if method == "get_parent_chore":
+                chore = repo.get_parent_chore(params["id"])
+                uow.rollback()
+                return _response(request_id, serialize_chore(chore) if chore else None)
+            if method == "find_root_chores":
+                chores = repo.find_root_chores()
+                uow.rollback()
+                return _response(request_id, [serialize_chore(chore) for chore in chores])
+            if method == "set_next_chore":
+                chore = repo.read(params["id"])
+                next_chore = repo.read(params["next_id"])
+                if chore is None or next_chore is None:
+                    raise KeyError("id")
+                chore.set_next_chore(next_chore)
+                uow.commit()
+                return _response(request_id, serialize_chore(chore))
+            if method == "get_next_chore":
+                chore = repo.read(params["id"])
+                if chore is None:
+                    uow.rollback()
+                    return _response(request_id, None)
+                next_chore = chore.get_next_chore()
+                uow.rollback()
+                return _response(request_id, serialize_chore(next_chore) if next_chore else None)
+            if method == "advance_status":
+                chore = repo.read(params["id"])
+                if chore is None:
+                    uow.rollback()
+                    return _response(request_id, None)
+                to_status = ChoreStatus(params["to_status"])
+                self._transitions.execute_transition(chore, to_status)
+                uow.commit()
+                return _response(request_id, serialize_chore(chore))
+            if method == "validate_chain_integrity":
+                errors = validate_chain_integrity({chore.id: chore for chore in repo.list_all()})
+                uow.rollback()
+                return _response(request_id, {"errors": errors})
+            if method == "list_archive":
+                chores = list(uow.archive_store.values())
+                uow.rollback()
+                return _response(request_id, [serialize_chore(chore) for chore in chores])
+            if method == "archive_chore":
+                chore = repo.read(params["id"])
+                if chore is None:
+                    uow.rollback()
+                    return _response(request_id, None)
+                if chore.status != ChoreStatus.WORK_DONE:
+                    raise ValidationError("Only WORK_DONE chores can be archived")
+                uow.archive_store[chore.id] = chore
+                repo.delete(chore.id)
+                uow.commit()
+                return _response(request_id, {"archived": True, "id": chore.id})
         except KeyError as exc:
             uow.rollback()
             return _response(request_id, error=f"Missing parameter: {exc.args[0]}")
+        except (TransitionError, ValidationError) as exc:
+            uow.rollback()
+            return _response(request_id, error=str(exc))
         except Exception as exc:
             uow.rollback()
             return _response(request_id, error=str(exc))
